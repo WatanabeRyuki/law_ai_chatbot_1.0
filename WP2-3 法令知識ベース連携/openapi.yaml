@@ -1,0 +1,387 @@
+openapi: 3.0.0
+info:
+  title: Law Chat - Legal Knowledge Base Module API
+  description: |
+    法令知識ベース連携モジュールAPI
+    
+    e-Gov API を利用して日本法の条文を取得・パース・インデックス化し、
+    対話システム（Gemini）や上流モジュールが利用できるように
+    「条文検索 API」「条文要約 API」「論点抽出 API」を提供します。
+  version: 1.0.0
+  contact:
+    name: Law Chat Bot Support
+    email: support@lawchat.example.com
+
+servers:
+  - url: http://localhost:8083
+    description: ローカル開発環境
+  - url: https://api.lawchat.example.com
+    description: 本番環境
+
+paths:
+  /laws/list:
+    get:
+      summary: 法令リストを取得
+      tags:
+        - laws
+      parameters:
+        - name: law_type
+          in: query
+          description: 法令種別（任意）
+          required: false
+          schema:
+            type: string
+            example: "法律"
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LawListResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /laws/{law_id}:
+    get:
+      summary: 法令詳細情報を取得
+      tags:
+        - laws
+      parameters:
+        - name: law_id
+          in: path
+          required: true
+          description: 法令ID
+          schema:
+            type: string
+            example: "CIVIL_LAW_001"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LawInfo'
+        '404':
+          description: 法令が見つかりません
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /laws/{law_id}/articles/{article_no}:
+    get:
+      summary: 特定の条文を取得
+      tags:
+        - laws
+      parameters:
+        - name: law_id
+          in: path
+          required: true
+          description: 法令ID
+          schema:
+            type: string
+        - name: article_no
+          in: path
+          required: true
+          description: 条番号
+          schema:
+            type: string
+            example: "第1条"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleInfo'
+        '404':
+          description: 条文が見つかりません
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /laws/{law_id}/articles/{article_no}/summarize:
+    post:
+      summary: 条文を要約
+      tags:
+        - laws
+      parameters:
+        - name: law_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: article_no
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SummarizeArticleRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummaryResponse'
+        '404':
+          description: 条文が見つかりません
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /laws/extract_topics:
+    post:
+      summary: 複数条文から論点を抽出
+      tags:
+        - laws
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtractTopicsRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicsResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /laws/search:
+    post:
+      summary: 法令を検索（キーワード or 条文参照）
+      tags:
+        - laws
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: law_reference
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LawListResponse'
+        '500':
+          description: サーバーエラー
+
+components:
+  schemas:
+    LawListItem:
+      type: object
+      properties:
+        law_id:
+          type: string
+          example: "CIVIL_LAW_001"
+        title:
+          type: string
+          example: "民法"
+        law_no:
+          type: string
+          example: "明治29年法律第89号"
+        law_type:
+          type: string
+          example: "法律"
+        enact_date:
+          type: string
+          format: date-time
+          nullable: true
+
+    LawListResponse:
+      type: object
+      properties:
+        laws:
+          type: array
+          items:
+            $ref: '#/components/schemas/LawListItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+
+    ArticleInfo:
+      type: object
+      properties:
+        article_no:
+          type: string
+          example: "第1条"
+        heading:
+          type: string
+          nullable: true
+        text:
+          type: string
+        structure:
+          type: object
+          nullable: true
+
+    LawInfo:
+      type: object
+      properties:
+        law_id:
+          type: string
+        title:
+          type: string
+        law_no:
+          type: string
+        enact_date:
+          type: string
+          format: date-time
+          nullable: true
+        articles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleInfo'
+        metadata:
+          type: object
+          nullable: true
+
+    SummarizeArticleRequest:
+      type: object
+      properties:
+        max_length:
+          type: integer
+          default: 200
+          minimum: 50
+          maximum: 2000
+        style:
+          type: string
+          enum: [plain, legal_summary, for_layperson]
+          default: plain
+
+    SummaryResponse:
+      type: object
+      properties:
+        summary_text:
+          type: string
+        original_reference:
+          type: object
+        citations:
+          type: array
+          items:
+            type: string
+        style:
+          type: string
+        word_count:
+          type: integer
+
+    ExtractTopicsRequest:
+      type: object
+      required:
+        - texts
+      properties:
+        texts:
+          type: array
+          items:
+            type: string
+        mode:
+          type: string
+          enum: [topic_extraction, issue_mapping]
+          default: topic_extraction
+        max_topics:
+          type: integer
+          default: 5
+          minimum: 1
+          maximum: 20
+
+    TopicItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        source_refs:
+          type: array
+          items:
+            type: string
+
+    TopicsResponse:
+      type: object
+      properties:
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicItem'
+        relations:
+          type: array
+          items:
+            type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+        error:
+          type: string
+          nullable: true
+
+  responses:
+    NotFound:
+      description: リソースが見つかりません
+    InternalServerError:
+      description: 内部サーバーエラー
+

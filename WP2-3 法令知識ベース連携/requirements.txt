@@ -1,0 +1,51 @@
+# Law Chat Legal Knowledge Base Module - Dependencies
+# FastAPI + e-Gov API + Gemini + PostgreSQL連携に必要なライブラリ
+
+# Web Framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# Data Validation
+pydantic==2.9.2
+pydantic-settings==2.1.0
+
+# HTTP Client
+httpx==0.27.2
+
+# XML Processing
+lxml==5.1.0
+xmltodict==0.13.0
+
+# Database
+sqlalchemy==2.0.29
+alembic==1.13.1
+psycopg2-binary==2.9.9
+pgvector==0.3.0
+
+# Cache
+redis==5.0.5
+hiredis==3.0.0
+
+# Async Task Queue
+celery==5.4.0
+
+# Vector & ML
+transformers==4.36.0
+torch>=2.2.0
+numpy>=1.24.3
+sentencepiece==0.2.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Logging
+structlog==24.1.0
+
+# Testing
+pytest==8.0.0
+pytest-asyncio==0.23.6
+pytest-cov==4.1.0
+
+# Monitoring
+prometheus-client==0.20.0
+

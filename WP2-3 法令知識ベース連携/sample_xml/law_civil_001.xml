@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Law xmlns="http://law.e-gov.go.jp/ns/ul/011CIVIL">
+    <LawHeader>
+        <LawNum>明治29年法律第89号</LawNum>
+        <LawName>民法</LawName>
+        <EnactDate>1896-04-27</EnactDate>
+    </LawHeader>
+    <MainProvision>
+        <Chapter Title="総則">
+            <Section Title="通則">
+                <Article Num="1" Title="私権の内容">
+                    <Paragraph Num="1">
+                        私権は、公共の福祉に適合しなければならない。
+                    </Paragraph>
+                </Article>
+                <Article Num="2" Title="解釈の基準">
+                    <Paragraph Num="1">
+                        この法律は、個人の尊厳と両性の本質的平等を明記して、解釈しなければならない。
+                    </Paragraph>
+                </Article>
+            </Section>
+        </Chapter>
+    </MainProvision>
+</Law>
+
